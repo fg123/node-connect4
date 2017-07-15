@@ -1,0 +1,24 @@
+/* client.css */
+
+.header {
+	width:100%;
+  height: 40px;
+  background: #000;
+  color: #FFF;
+}
+
+.gameWrapper {
+	width: 100%;
+  height: auto;
+  text-align: center;
+}
+
+.userControl {
+	padding-top: 20px;
+}
+
+.userControl div {
+	display: inline-block;
+	text-align: center;
+
+}

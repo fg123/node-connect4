@@ -78,11 +78,22 @@ io.on("connection", function(socket) {
                 }
 
                 var win = checkWin();
-                if(win === 1) {
-                    players[0].socket.emit("winner");
-                }
-                else if(win === 2) {
-                    players[1].socket.emit("winner");
+                if(win !== 0) {
+                    players[0].socket.emit("winner", win);
+                    players[1].socket.emit("winner", win);
+                    for(var id in spectators) {
+                        spectators[id].socket.emit("winner", win);
+                    }
+                    setTimeout(function() {
+                        boardState = [[], [], [], [], [], [], []];
+                        currTurn = 1;
+
+                        players[0].socket.emit("reset");
+                        players[1].socket.emit("reset");
+                        for(var id in spectators) {
+                            spectators[id].socket.emit("reset");
+                        }
+                    }, 5000);
                 }
                 else if(currTurn === 1) {
                     currTurn = 2;

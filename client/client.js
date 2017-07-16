@@ -140,17 +140,14 @@ function setupSocket() {
     }
 
     socket.on("connected", function(role) {
-        if(role === 1) {
-            player = role;
-        }
-        else if(role === 2) {
-            player = role;
-        }
-        else {
-            player = -1;
-        }
+		player = role;
+		if (player == 0) {
+			setHeaderText("You are spectating...");
+		}
+		else { 
+			setHeaderText("Connected to server. Waiting for player...");
+		}
 		initUserControl();
-		setHeaderText("Connected to server. Waiting for player...");
     });
 
     socket.on("newBoard", function(board) {

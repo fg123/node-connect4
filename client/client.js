@@ -67,7 +67,7 @@ function drawBoard() {
 	var leftX = (gameWidth - (gridWidth * boxSize)) / 2;
 	ctx.fillStyle = "#1750aa";
 	ctx.fillRect(leftX, gameHeight - (gridHeight * boxSize) - padding, gameWidth - leftX - padding, gameHeight - padding * 2);
-	
+	ctx.beginPath();
     // Draw Boxes
     for (var i = 0; i < gridWidth + 1; i++) {
         // Verticals
@@ -167,13 +167,13 @@ function setupSocket() {
 
 	socket.on("winner", function (winner) {
 		if (player == winner) {
-			setHeaderText("You've won!");
+			setHeaderText("You've won! Game will reset soon...");
 		}
 		else if (player != 0) { 
-			setHeaderText("You lost!");
+			setHeaderText("You lost! Game will reset soon...");
 		}
 		else {
-			setHeaderText("Player " + winner + " won!");
+			setHeaderText("Player " + winner + " won! Game will reset soon...");
 		}
     });
 

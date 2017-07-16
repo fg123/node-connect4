@@ -1,16 +1,18 @@
 // client.js
 
 var socket;
-var boardState = [[], [], [], [], [], [], []];
+var boardState = clearBoard();
 
 // Drawing
 var canvas;
-var gameHeight = 480;
-var gameWidth = 854;
+
+var padding = 20;
 var boxSize = 64;
 var pieceSize = 54;
 var gridWidth = 7; // 7 cols
 var gridHeight = 6; // 6 rows
+var gameHeight = gridHeight * boxSize + 2 * padding;
+var gameWidth = gridWidth * boxSize + 2 * padding;
 var isCurrentTurn = false;
 var player = 0;
 
@@ -36,7 +38,7 @@ $(document).ready(function() {
 
     $(".gameWrapper").mousemove(function (event) {
         if (isCurrentTurn) {
-            var leftOffset = $(".gameCanvas").offset().left;
+            var leftOffset = $(".gameCanvas").offset().left + padding;
             var mouse = event.pageX - leftOffset;
             var index = parseInt((event.pageX - leftOffset) / boxSize);
             for (var i = 0; i < gridWidth; i++) {
@@ -49,30 +51,35 @@ $(document).ready(function() {
             }
         }
     });
-
+	setHeaderText("Waiting for server...");
 });
+
+function setHeaderText(s) { 
+	$(".header").html(s);
+}
 
 function drawBoard() {
     var ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#FFF";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    ctx.lineWidth = 2;
-    ctx.fillRect(0, 0, gameWidth, gameHeight);
-    ctx.beginPath();
-    var leftX = (gameWidth - (gridWidth * boxSize)) / 2;
-    var padding = 20;
+    ctx.lineWidth = 4;
+    
+	var leftX = (gameWidth - (gridWidth * boxSize)) / 2;
+	ctx.fillStyle = "#1750aa";
+	ctx.fillRect(leftX, gameHeight - (gridHeight * boxSize) - padding, gameWidth - leftX - padding, gameHeight - padding * 2);
+	
     // Draw Boxes
     for (var i = 0; i < gridWidth + 1; i++) {
         // Verticals
         ctx.moveTo(leftX + (i * boxSize), gameHeight - padding);
-        ctx.lineTo(leftX + (i * boxSize), gameHeight - (gridHeight * boxSize) - padding);
+		ctx.lineTo(leftX + (i * boxSize), gameHeight - (gridHeight * boxSize) - padding);
     }
     for (var i = 0; i < gridHeight + 1; i++) {
         // Horizontals
         ctx.moveTo(leftX, gameHeight - (i * boxSize) - padding);
         ctx.lineTo(gameWidth - leftX, gameHeight - (i * boxSize) - padding);
     }
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = "#0d326b";
     ctx.stroke();
     // Draw the Circles
     for (var col = 0; col < boardState.length; col++) {
@@ -102,8 +109,7 @@ function initUserControl() {
         });
         $(".userControl").append(newDiv);
         var ctx = newDiv.find("canvas")[0].getContext("2d");
-        ctx.fillStyle = "#FFF";
-        ctx.fillRect(0, 0, pieceSize, pieceSize);
+       	ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
         ctx.arc(pieceSize / 2, pieceSize / 2, pieceSize / 2, 0, 2 * Math.PI);
         if (player == 1) {
@@ -118,9 +124,13 @@ function initUserControl() {
 
 function handlePushPiece(id) {
     console.log('click', isCurrentTurn);
-    if (isCurrentTurn) {
-        socket.emit("placePiece", parseInt(id.replace(/\D/g,'')));
-        isCurrentTurn = false;
+	if (isCurrentTurn) {
+		var col = parseInt(id.replace(/\D/g, ''));
+		if (boardState[col].length < gridHeight) {
+			socket.emit("placePiece", col);
+			isCurrentTurn = false;
+			setHeaderText("Waiting for opponent...");
+		}	
     }
 }
 
@@ -139,7 +149,8 @@ function setupSocket() {
         else {
             player = -1;
         }
-        initUserControl();
+		initUserControl();
+		setHeaderText("Connected to server. Waiting for player...");
     });
 
     socket.on("newBoard", function(board) {
@@ -150,15 +161,38 @@ function setupSocket() {
 
     socket.on("turn", function() {
         console.log("my turn");
-        isCurrentTurn = true;
+		isCurrentTurn = true;
+		setHeaderText("Your turn!");
     })
 
-    socket.on("winner", function(player) {
+	socket.on("winner", function (winner) {
+		if (player == winner) {
+			setHeaderText("You've won!");
+		}
+		else if (player != 0) { 
+			setHeaderText("You lost!");
+		}
+		else {
+			setHeaderText("Player " + winner + " won!");
+		}
     });
 
+	socket.on("reset", function () {
+		boardState = clearBoard();
+		drawBoard();
+		setHeaderText("Waiting to start...");
+	});
     socket.on("errorMsg", function(msg) {
         console.log(msg);
     });
 
     socket.emit("start");
+}
+
+function clearBoard() {
+	var res = [];
+	for (var i = 0; i < gridWidth; i++) { 
+		res.push([]);
+	}
+	return res;
 }

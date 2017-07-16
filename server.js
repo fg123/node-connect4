@@ -26,6 +26,42 @@ function checkWin() {
     return 0;
 };
 
+function chkLine(a,b,r,c) {
+    // Check first cell non-zero and all cells match
+    return (a && b && r && c && (a !== 0) && (a === b) && (a === r) && (a === c));
+}
+
+function checkWin() {
+    var c, r;
+    var bd = boardState;
+
+    // Check down
+    for (c = 0; c < 4; c++)
+        for (r = 0; r < 6; r++)
+            if (chkLine(bd[c][r], bd[c+1][r], bd[c+2][r], bd[c+3][r]))
+                return bd[c][r];
+
+    // Check right
+    for (c = 0; c < 7; c++)
+        for (r = 0; r < 3; r++)
+            if (chkLine(bd[c][r], bd[c][r+1], bd[c][r+2], bd[c][r+3]))
+                return bd[c][r];
+
+    // Check down-right
+    for (c = 0; c < 4; c++)
+        for (r = 0; r < 3; r++)
+            if (chkLine(bd[c][r], bd[c+1][r+1], bd[c+2][r+2], bd[c+3][r+3]))
+                return bd[c][r];
+
+    // Check down-left
+    for (c = 3; c < 7; c++)
+        for (r = 0; r < 3; r++)
+            if (chkLine(bd[c][r], bd[c-1][r+1], bd[c-2][r+2], bd[c-3][r+3]))
+                return bd[c][r];
+
+    return 0;
+}
+
 io.on("connection", function(socket) {
     var newPlayer = {
         socket: socket,
@@ -59,6 +95,7 @@ io.on("connection", function(socket) {
 
     socket.on("placePiece", function(col) {
         console.log("Placing piece as " + newPlayer.role + " at " + col);
+        console.log(boardState);
         if(newPlayer.role === 1 || newPlayer.role === 2) {
             if(newPlayer.role !== currTurn) {
                 socket.emit("errorMsg", "It is not your turn yet");
@@ -69,7 +106,6 @@ io.on("connection", function(socket) {
             else {
                 console.log("pushed");
                 boardState[col].push(newPlayer.role);
-                console.log(boardState);
 
                 players[0].socket.emit("newBoard", boardState);
                 players[1].socket.emit("newBoard", boardState);
@@ -93,6 +129,8 @@ io.on("connection", function(socket) {
                         for(var id in spectators) {
                             spectators[id].socket.emit("reset");
                         }
+
+                        players[0].socket.emit("turn");
                     }, 5000);
                 }
                 else if(currTurn === 1) {

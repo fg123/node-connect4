@@ -12,23 +12,18 @@ var boardState = [[], [], [], [], [], [], []]; //7 columns
 var maxHeight = 6;
 var currTurn = 0;
 
-function checkWin() {
-    // Columns
-    for(var i = 0; i < boardState.length; ++i) {
-        var colStr = boardState[i].toString();
-        if(colStr.indexOf("1,1,1,1") > -1) {
-            return 1;
-        }
-        else if(colStr.indexOf("2,2,2,2") > -1) {
-            return 2;
-        }
-    }
-    return 0;
-};
-
 function chkLine(a,b,r,c) {
     // Check first cell non-zero and all cells match
     return (a && b && r && c && (a !== 0) && (a === b) && (a === r) && (a === c));
+}
+
+function checkTie() { 
+	for (var a = 0; a < boardState.length; a++) { 
+		if (boardState[a] != maxHeight) { 
+			return false;
+		}
+	}
+	return true;
 }
 
 function checkWin() {
@@ -59,7 +54,7 @@ function checkWin() {
             if (chkLine(bd[c][r], bd[c-1][r+1], bd[c-2][r+2], bd[c-3][r+3]))
                 return bd[c][r];
 
-    return 0;
+    return !checkTie() - 1;
 }
 
 io.on("connection", function(socket) {
@@ -113,34 +108,36 @@ io.on("connection", function(socket) {
                     spectators[id].socket.emit("newBoard", boardState);
                 }
 
-                var win = checkWin();
-                if(win !== 0) {
-                    players[0].socket.emit("winner", win);
-                    players[1].socket.emit("winner", win);
-                    for(var id in spectators) {
-                        spectators[id].socket.emit("winner", win);
-                    }
-                    setTimeout(function() {
-                        boardState = [[], [], [], [], [], [], []];
-                        currTurn = 1;
+				var win = checkWin();
+				if (win !== 0) {
+					players[0].socket.emit("winner", win);
+					players[1].socket.emit("winner", win);
+					for (var id in spectators) {
+						spectators[id].socket.emit("winner", win);
+					}
+					setTimeout(function () {
+						boardState = [[], [], [], [], [], [], []];
+						currTurn = 1;
 
-                        players[0].socket.emit("reset");
-                        players[1].socket.emit("reset");
-                        for(var id in spectators) {
-                            spectators[id].socket.emit("reset");
-                        }
+						players[0].socket.emit("reset");
+						players[1].socket.emit("reset");
+						for (var id in spectators) {
+							spectators[id].socket.emit("reset");
+						}
 
-                        players[0].socket.emit("turn");
-                    }, 5000);
-                }
-                else if(currTurn === 1) {
-                    currTurn = 2;
-                    players[1].socket.emit("turn");
-                }
-                else {
-                    currTurn = 1;
-                    players[0].socket.emit("turn");
-                }
+						players[0].socket.emit("turn");
+					}, 5000);
+				}
+				else {
+					if (currTurn === 1) {
+						currTurn = 2;
+						players[1].socket.emit("turn");
+					}
+					else {
+						currTurn = 1;
+						players[0].socket.emit("turn");
+					}
+				}	
             }
         }
         else {

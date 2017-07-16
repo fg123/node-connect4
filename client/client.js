@@ -169,6 +169,9 @@ function setupSocket() {
 		if (player == winner) {
 			setHeaderText("You've won! Game will reset soon...");
 		}
+		else if (winner == -1) { 
+			setHeaderText("It's a tie! Game will reset soon...");
+		}
 		else if (player != 0) { 
 			setHeaderText("You lost! Game will reset soon...");
 		}
